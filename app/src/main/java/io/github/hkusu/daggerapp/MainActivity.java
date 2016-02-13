@@ -4,7 +4,6 @@ import android.support.annotation.MainThread;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -15,82 +14,64 @@ import javax.inject.Inject;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import de.greenrobot.event.EventBus;
 import io.github.hkusu.daggerapp.adapter.TodoListAdapter;
-import io.github.hkusu.daggerapp.service.RealmService;
+import io.github.hkusu.daggerapp.model.repository.TodoRepository;
+import io.github.hkusu.daggerapp.service.RxEventBus;
 import io.github.hkusu.daggerapp.viewcontroller.UserEventViewController;
+import rx.Subscription;
 
 public class MainActivity extends AppCompatActivity {
-
-    //TODO service層、ripository層
-
-
-
-    @Inject SomeManager someManager;
+    @Inject
+    UserEventViewController userEventViewController;
+    @Inject
+    TodoRepository todoRepository;
+    @Inject
+    RxEventBus rxEventBus;
 
     @Bind(R.id.toolbar)
-    Toolbar mToolbar;
+    Toolbar toolbar;
     @Bind(R.id.todoEditText)
-    EditText mTodoEditText;
+    EditText todoEditText;
     @Bind(R.id.createButton)
-    Button mCreateButton;
+    Button createButton;
     @Bind(R.id.countTextView)
-    TextView mCountTextView;
+    TextView countTextView;
     @Bind(R.id.todoListView)
-    ListView mTodoListView;
+    ListView todoListView;
 
-    /** Todoデータ表示用ListViewにセットするListAdapter */
-    private TodoListAdapter mTodoListAdapter;
-    /** ユーザイベントをハンドリングするViewController */
-    private UserEventViewController mUserEventViewController = new UserEventViewController();
+    private TodoListAdapter todoListAdapter; // ListView用のAdapter
+    private Subscription subscription; // イベント購読用
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this); // ButterKnife
-
-        PersistenceComponent component = DaggerPersistenceComponent.create();
-        component.inject(this);
+        MainApplication.getAppComponent().inject(this); // Dagger
 
         // ToolBarの設定
-        mToolbar.setTitle(R.string.app_name);
-        setSupportActionBar(mToolbar);
+        toolbar.setTitle(R.string.app_name);
+        setSupportActionBar(toolbar);
 
         // ListAdapterを作成
-        mTodoListAdapter = new TodoListAdapter(
+        todoListAdapter = new TodoListAdapter(
                 this,
                 R.layout.adapter_todo_list,
-                RealmService.getInstance().get() // ListViewに表示するデータセット
+                todoRepository.get() // ListViewに表示するデータセット
         );
         // ListViewにAdapterをセット
-        mTodoListView.setAdapter(mTodoListAdapter);
+        todoListView.setAdapter(todoListAdapter);
 
         // 起動時にソフトウェアキーボードが表示されないようにする
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
-        // ViewControllerのライフサイクルメソッド
-        mUserEventViewController.onCreate(this);
+        userEventViewController.onCreate(this);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-
-        // ViewControllerのライフサイクルメソッド(ViewController側でやらせたい処理がある場合 or Listenerを設定したい場合のみ)
-        // Listenerを設定しない場合は .onStart(null) とする
-        mUserEventViewController.onStart(new UserEventViewController.Listener() {
-            @Override
-            public void onCreateButtonClick() {
-                Log.d("button", "create button clicked.");
-            }
-
-            @Override
-            public void onDeleteButtonClick() {
-                Log.d("button", "delete button clicked.");
-            }
-        });
-
+        userEventViewController.onStart(null);
         // 画面の初期表示
         updateView();
     }
@@ -98,46 +79,34 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        EventBus.getDefault().register(this); // EventBus
-        EventBus.getDefault().register(mUserEventViewController); // EventBus
+        userEventViewController.onResume();
+        // Todoデータの変更イベントを購読 *Viewの操作を伴う為メインスレッドで受ける*
+        subscription = rxEventBus.onEventMainThread(TodoRepository.ChangedEvent.class, event -> {
+            // 画面の表示を更新
+            updateView();
+        });
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        EventBus.getDefault().unregister(this); // EventBus
-        EventBus.getDefault().unregister(mUserEventViewController); // EventBus
+        userEventViewController.onPause();
+        subscription.unsubscribe(); // 購読を解除
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         ButterKnife.unbind(this); // ButterKnife
-
-        // ViewControllerのライフサイクルメソッド
-        mUserEventViewController.onDestroy();
+        userEventViewController.onDestroy();
     }
 
-    /**
-     * EventBusからの通知の購読（Realm上のTodoデータの変更）*Viewの操作を伴う為メインスレッドで受ける*
-     *
-     * @param event EventBus用のイベントクラス
-     */
-    @SuppressWarnings("unused")
-    public void onEventMainThread(RealmService.ChangedEvent event) {
-        // 画面の表示を更新
-        updateView();
-    }
-
-    /**
-     * 画面の表示を更新するPrivateメソッド
-     */
+    // 画面の表示を更新するPrivateメソッド
     @MainThread
     private void updateView() {
         // データセットの変更があった旨をAdapterへ通知
-        mTodoListAdapter.notifyDataSetChanged();
+        todoListAdapter.notifyDataSetChanged();
         // Todoデータの件数を更新
-        mCountTextView.setText(String.valueOf(RealmService.getInstance().getSize()));
+        countTextView.setText(String.valueOf(todoRepository.size()));
     }
-
 }

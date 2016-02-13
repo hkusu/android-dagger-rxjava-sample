@@ -2,21 +2,24 @@ package io.github.hkusu.daggerapp;
 
 import android.app.Application;
 
-import io.realm.Realm;
-import io.realm.RealmConfiguration;
+import io.github.hkusu.daggerapp.di.AppComponent;
+import io.github.hkusu.daggerapp.di.AppModule;
+import io.github.hkusu.daggerapp.di.DaggerAppComponent;
 
 public class MainApplication extends Application {
+    private static AppComponent appComponent;
+
+    public static AppComponent getAppComponent() {
+        return appComponent;
+    }
 
     @Override
     public void onCreate() {
         super.onCreate();
-        // Realm の初期設定
-        RealmConfiguration realmConfiguration = new RealmConfiguration.Builder(this).build();
-        Realm.setDefaultConfiguration(realmConfiguration);
-        // 起動時に Realm のデータを削除(開発時)
-        //if (BuildConfig.DEBUG) {
-        //    Realm.deleteRealm(realmConfiguration);
-        //}
+        //appComponent = DaggerAppComponent.create();
+        appComponent = DaggerAppComponent
+                .builder()
+                .appModule(new AppModule(this))
+                .build();
     }
-
 }

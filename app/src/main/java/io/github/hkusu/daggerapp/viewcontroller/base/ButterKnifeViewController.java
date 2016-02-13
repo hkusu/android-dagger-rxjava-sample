@@ -9,10 +9,9 @@ import android.support.annotation.Nullable;
 import butterknife.ButterKnife;
 
 /**
- * @see {http://qiita.com/hkusu/items/2e8fb40442190b440029}
+ * @see <a href="http://qiita.com/hkusu/items/2e8fb40442190b440029">Controllerへ処理を委譲する</a>
  */
 public class ButterKnifeViewController<T> {
-
     private Activity activity;
     private T listener;
 
@@ -41,11 +40,11 @@ public class ButterKnifeViewController<T> {
         }
     }
 
-    protected void onResume() {}
+    public void onResume() {}
 
-    protected void onPause() {}
+    public void onPause() {}
 
-    protected void onStop() {}
+    public void onStop() {}
 
     @CallSuper
     public void onDestroy() {
@@ -53,5 +52,4 @@ public class ButterKnifeViewController<T> {
         activity = null;
         listener = null; // onStopで処理したいがそのためにコールさせるのは冗長なので
     }
-
 }

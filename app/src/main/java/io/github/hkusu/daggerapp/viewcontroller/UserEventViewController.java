@@ -3,6 +3,7 @@ package io.github.hkusu.daggerapp.viewcontroller;
 import android.app.Activity;
 import android.content.Context;
 import android.support.annotation.MainThread;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.Toolbar;
 import android.view.KeyEvent;
@@ -12,88 +13,93 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import javax.inject.Inject;
+
 import butterknife.Bind;
 import butterknife.OnClick;
 import butterknife.OnEditorAction;
 import butterknife.OnTextChanged;
+import io.github.hkusu.daggerapp.MainApplication;
 import io.github.hkusu.daggerapp.R;
-import io.github.hkusu.daggerapp.service.RealmService;
+import io.github.hkusu.daggerapp.service.RxEventBus;
+import io.github.hkusu.daggerapp.model.entity.Todo;
+import io.github.hkusu.daggerapp.model.repository.TodoRepository;
 import io.github.hkusu.daggerapp.adapter.TodoListAdapter;
-import io.github.hkusu.daggerapp.model.entity.TodoEntity;
 import io.github.hkusu.daggerapp.viewcontroller.base.ButterKnifeViewController;
+import rx.Subscription;
 
-public class UserEventViewController extends ButterKnifeViewController<UserEventViewController.Listener> {
-// NOTE：Listenerを設定しない場合は ButterKnifeViewController<Void> とする
+public class UserEventViewController extends ButterKnifeViewController<Void> {
+    @Inject
+    TodoRepository todoRepository;
+    @Inject
+    RxEventBus rxEventBus;
 
     @Bind(R.id.toolbar)
-    Toolbar mToolbar;
+    Toolbar toolbar;
     @Bind(R.id.todoEditText)
-    EditText mTodoEditText;
+    EditText todoEditText;
     @Bind(R.id.createButton)
-    Button mCreateButton;
+    Button createButton;
     @Bind(R.id.countTextView)
-    TextView mCountTextView;
+    TextView countTextView;
     @Bind(R.id.todoListView)
-    ListView mTodoListView;
+    ListView todoListView;
 
-    // Listenerを設定して呼び出し元にコールバックしたい場合のみ
-    public interface Listener {
-        void onCreateButtonClick();
-        void onDeleteButtonClick();
+    private Subscription subscription; // イベント購読用
+
+    @Inject
+    public UserEventViewController() {
     }
-
-    // もしなにかViewControllerに渡したい場合は、
-    //   コンストラクタを実装して渡す or
-    //   Listenerにgetter的なメソッドを用意する or
-    //   Activityにgetterを用意する or
-    //   本ViewControllerにsetterを用意する 等
-    //public UserEventViewController() {
-    //}
 
     @Override
-    public void onStart(@Nullable Listener listener) {
-        super.onStart(listener);
-        mCreateButton.setEnabled(false); // 初期は[登録]ボタンを非活性に
+    public void onCreate(@NonNull Activity activity) {
+        super.onCreate(activity);
+        MainApplication.getAppComponent().inject(this); // Dagger
     }
 
-    /**
-     * 入力エリアのテキスト変更
-     */
+    @Override
+    public void onStart(@Nullable Void listener) {
+        super.onStart(null);
+        createButton.setEnabled(false); // 初期は[登録]ボタンを非活性に
+    }
+
+    @Override
+    public void onResume() {
+        // 削除ボタンの押下イベントを購読
+        subscription = rxEventBus.onEvent(TodoListAdapter.ViewHolder.DeleteButtonClickedEvent.class, event -> {
+            // データ削除
+            todoRepository.delete(event.getId());
+        });
+    }
+
+    @Override
+    public void onPause() {
+        subscription.unsubscribe(); // 購読を解除
+    }
+
+    // 入力エリアのテキスト変更
     @OnTextChanged(R.id.todoEditText)
     public void onTodoEditTextChanged() {
         // [登録]ボタンを活性化
-        mCreateButton.setEnabled(true);
+        createButton.setEnabled(true);
     }
 
-    /**
-     * [登録]ボタン押下
-     */
+    // [登録]ボタン押下
     @OnClick(R.id.createButton)
     public void onCreateButtonClick() {
         // 入力内容が空の場合は何もしない
-        if (mTodoEditText.getText().toString().equals("")) {
+        if (todoEditText.getText().toString().equals("")) {
             return;
         }
         // Todoデータを登録
         registerTodo();
-
-        // Activityに[登録]ボタンが押下されたことを通知してみるテスト
-        Listener listener = getListener();
-        if (listener != null) {
-            getListener().onCreateButtonClick();
-        }
     }
 
-    /**
-     * 入力エリアでEnter
-     *
-     * @param event キーイベント
-     * @return イベント処理結果(trueは消化済の意)
-     */
+    // 入力エリアでEnter
     @OnEditorAction(R.id.todoEditText)
     public boolean onTodoEditTextEditorAction(KeyEvent event) {
         // 入力内容が空の場合は何もしない
-        if (mTodoEditText.getText().toString().equals("")) {
+        if (todoEditText.getText().toString().equals("")) {
             return true;
         }
         // 前半はソフトウェアキーボードのEnterキーの判定、後半は物理キーボードでの判定
@@ -104,9 +110,7 @@ public class UserEventViewController extends ButterKnifeViewController<UserEvent
         return true;
     }
 
-    /**
-     * 画面での入力内容をRealmへ登録するPrivateメソッド
-     */
+    // 画面での入力内容をRealmへ登録するPrivateメソッド
     @MainThread
     private void registerTodo() {
         Activity activity = getActivity();
@@ -115,36 +119,17 @@ public class UserEventViewController extends ButterKnifeViewController<UserEvent
         }
 
         // Todoデータを作成
-        TodoEntity todoEntity = new TodoEntity();
-        todoEntity.setText(mTodoEditText.getText().toString());
-        // データ操作モデルを通して登録
-        if (!RealmService.getInstance().createOrUpdate(todoEntity)) {
+        Todo todo = new Todo();
+        todo.setText(todoEditText.getText().toString());
+        // データ登録
+        if (!todoRepository.createOrUpdate(todo)) {
             return;
         }
         // 入力内容は空にする
-        mTodoEditText.setText(null);
+        todoEditText.setText(null);
         // ソフトウェアキーボードを隠す
-        ((InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(mTodoEditText.getWindowToken(), 0);
+        ((InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(todoEditText.getWindowToken(), 0);
         // [登録]ボタンを非活性に
-        mCreateButton.setEnabled(false);
+        createButton.setEnabled(false);
     }
-
-    /**
-     * EventBusからの通知の購読（削除ボタンの押下）
-     *
-     * @param event EventBus用のイベントクラス
-     */
-    @SuppressWarnings("unused")
-    public void onEvent(TodoListAdapter.DeleteButtonClickedEvent event) {
-        // データ操作モデルを通して削除
-        if (!RealmService.getInstance().removeById(event.getId())){
-            return;
-        }
-        // Activityに[削除]ボタンが押下されたことを通知してみるテスト
-        Listener listener = getListener();
-        if (listener != null) {
-            listener.onDeleteButtonClick();
-        }
-    }
-
 }

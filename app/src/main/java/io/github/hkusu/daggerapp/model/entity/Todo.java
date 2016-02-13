@@ -3,20 +3,19 @@ package io.github.hkusu.daggerapp.model.entity;
 import io.realm.RealmObject;
 import io.realm.annotations.PrimaryKey;
 
-public class TodoEntity extends RealmObject {
-
-    /** プライマリキーの物理名(Todoデータ操作モデルで利用) */
+public class Todo extends RealmObject {
+    // プライマリキー名
     public static final String PRIMARY_KEY = "id";
-    /** ソートキーの物理名(Todoデータ操作モデルで利用) */
+    // ソートキー名
     public static final String SORT_KEY = "id";
 
-    // RealmObjectのカラム定義
+    // カラム定義
     @PrimaryKey
     private int id;      // id
     private String text; // text
 
-    // RealmObject では引数なしのデフォルトコンストラクタをpublicで定義する必要がある
-    public TodoEntity() {
+    // Realmでは引数なしのデフォルトコンストラクタをpublicで定義する必要がある
+    public Todo() {
     }
 
     // 以降 Getter/Setter
@@ -36,5 +35,4 @@ public class TodoEntity extends RealmObject {
     public void setText(String text) {
         this.text = text;
     }
-
 }
