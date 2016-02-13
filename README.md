@@ -11,3 +11,5 @@
 - [Gradle Retrolambda Plugin (ver 3.2.5)](https://github.com/evant/gradle-retrolambda/)
 - [Realm (ver 0.81.1)](https://realm.io/)
 - [Butter Knife (ver 7.0.1)](http://jakewharton.github.io/butterknife/)
+
+> This project uses Java8 and [Retrolambda](https://github.com/orfjackal/retrolambda).
