@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="lightBrown">#D7CCC8</color>
-    <color name="mediumBrown">#8D6E63</color>
-    <color name="deepBrown">#3E2723</color>
-    <color name="accentOrange">#FF6E40</color>
+    <color name="indigo100">#C5CAE9</color>
+    <color name="indigo400">#5C6BC0</color>
+    <color name="indigo900">#1A237E</color>
+    <color name="deepOrangeA200">#FF6E40</color>
 </resources>
