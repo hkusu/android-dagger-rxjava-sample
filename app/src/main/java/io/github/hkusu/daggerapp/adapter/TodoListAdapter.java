@@ -10,22 +10,22 @@ import android.widget.TextView;
 
 import java.util.List;
 
-import javax.inject.Inject;
-
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.github.hkusu.daggerapp.MainApplication;
 import io.github.hkusu.daggerapp.R;
-import io.github.hkusu.daggerapp.service.RxEventBus;
 import io.github.hkusu.daggerapp.model.entity.Todo;
+import io.github.hkusu.daggerapp.service.RxEventBus;
 
 public class TodoListAdapter extends ArrayAdapter<Todo> {
+    private final Context context;
     private final LayoutInflater layoutInflater;
     private final int resource; // レイアウトXMLのid
 
     public TodoListAdapter(Context context, int resource, List<Todo> objects) {
         super(context, resource, objects);
+        this.context = context;
         layoutInflater = LayoutInflater.from(context);
         this.resource = resource;
     }
@@ -39,7 +39,7 @@ public class TodoListAdapter extends ArrayAdapter<Todo> {
         }
 
         // 今回はViewHolderに状態を持つので毎回作成する
-        viewHolder = new ViewHolder(convertView);
+        viewHolder = new ViewHolder(context, convertView);
         // この行のTodoデータを取得
         Todo todo = getItem(position);
         // Todoのテキストを表示
@@ -51,20 +51,17 @@ public class TodoListAdapter extends ArrayAdapter<Todo> {
     }
 
     public static class ViewHolder {
-        @Inject
-        RxEventBus rxEventBus;
-
         @Bind(R.id.todoTextView)
         TextView todoTextView;
         @Bind(R.id.deleteButton)
         Button deleteButton;
 
-        // Todoデータのid
-        private int id;
+        private RxEventBus rxEventBus;
+        private int id; // Todoデータのid
 
-        private ViewHolder(View view) {
+        private ViewHolder(Context context, View view) {
             ButterKnife.bind(this, view); // ButterKnife
-            MainApplication.getAppComponent().inject(this); // Dagger
+            rxEventBus = ((MainApplication)context.getApplicationContext()).getAppComponent().provideRxBus();
         }
 
         // [削除]ボタン押下

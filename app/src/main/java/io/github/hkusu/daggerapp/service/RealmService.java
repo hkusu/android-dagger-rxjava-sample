@@ -3,18 +3,19 @@ package io.github.hkusu.daggerapp.service;
 import java.util.List;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
-import io.github.hkusu.daggerapp.MainApplication;
 import io.github.hkusu.daggerapp.model.entity.Todo;
 import io.realm.Realm;
 import io.realm.RealmResults;
 
+@Singleton
 public class RealmService {
-    @Inject
-    Realm realm;
+    private final Realm realm;
 
-    public RealmService() {
-        MainApplication.getAppComponent().inject(this); // Dagger
+    @Inject
+    public RealmService(Realm realm) {
+        this.realm = realm;
     }
 
     // Todoデータ全件を取得(降順)

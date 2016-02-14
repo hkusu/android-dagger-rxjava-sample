@@ -19,21 +19,15 @@ import butterknife.Bind;
 import butterknife.OnClick;
 import butterknife.OnEditorAction;
 import butterknife.OnTextChanged;
-import io.github.hkusu.daggerapp.MainApplication;
 import io.github.hkusu.daggerapp.R;
-import io.github.hkusu.daggerapp.service.RxEventBus;
+import io.github.hkusu.daggerapp.adapter.TodoListAdapter;
 import io.github.hkusu.daggerapp.model.entity.Todo;
 import io.github.hkusu.daggerapp.model.repository.TodoRepository;
-import io.github.hkusu.daggerapp.adapter.TodoListAdapter;
+import io.github.hkusu.daggerapp.service.RxEventBus;
 import io.github.hkusu.daggerapp.viewcontroller.base.ButterKnifeViewController;
 import rx.Subscription;
 
 public class UserEventViewController extends ButterKnifeViewController<Void> {
-    @Inject
-    TodoRepository todoRepository;
-    @Inject
-    RxEventBus rxEventBus;
-
     @Bind(R.id.toolbar)
     Toolbar toolbar;
     @Bind(R.id.todoEditText)
@@ -45,16 +39,19 @@ public class UserEventViewController extends ButterKnifeViewController<Void> {
     @Bind(R.id.todoListView)
     ListView todoListView;
 
+    private final TodoRepository todoRepository;
+    private final RxEventBus rxEventBus;
     private Subscription subscription; // イベント購読用
 
     @Inject
-    public UserEventViewController() {
+    public UserEventViewController(TodoRepository todoRepository, RxEventBus rxEventBus) {
+        this.todoRepository = todoRepository;
+        this.rxEventBus = rxEventBus;
     }
 
     @Override
     public void onCreate(@NonNull Activity activity) {
         super.onCreate(activity);
-        MainApplication.getAppComponent().inject(this); // Dagger
     }
 
     @Override

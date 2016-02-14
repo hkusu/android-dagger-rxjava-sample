@@ -10,8 +10,12 @@ import rx.subjects.PublishSubject;
 import rx.subjects.SerializedSubject;
 import rx.subjects.Subject;
 
+@Singleton
 public class RxEventBus {
     private final Subject<Object, Object> subject = new SerializedSubject<>(PublishSubject.create());
+
+    @Inject
+    public RxEventBus() {}
 
     public <T> Subscription onEvent(Class<T> clazz, Action1<T> handler) {
         return subject

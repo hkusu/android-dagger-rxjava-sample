@@ -1,8 +1,8 @@
 package io.github.hkusu.daggerapp;
 
+import android.os.Bundle;
 import android.support.annotation.MainThread;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -10,24 +10,16 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import javax.inject.Inject;
-
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import io.github.hkusu.daggerapp.adapter.TodoListAdapter;
+import io.github.hkusu.daggerapp.di.AppComponent;
 import io.github.hkusu.daggerapp.model.repository.TodoRepository;
 import io.github.hkusu.daggerapp.service.RxEventBus;
 import io.github.hkusu.daggerapp.viewcontroller.UserEventViewController;
 import rx.Subscription;
 
 public class MainActivity extends AppCompatActivity {
-    @Inject
-    UserEventViewController userEventViewController;
-    @Inject
-    TodoRepository todoRepository;
-    @Inject
-    RxEventBus rxEventBus;
-
     @Bind(R.id.toolbar)
     Toolbar toolbar;
     @Bind(R.id.todoEditText)
@@ -39,6 +31,9 @@ public class MainActivity extends AppCompatActivity {
     @Bind(R.id.todoListView)
     ListView todoListView;
 
+    private UserEventViewController userEventViewController;
+    private TodoRepository todoRepository;
+    private RxEventBus rxEventBus;
     private TodoListAdapter todoListAdapter; // ListView用のAdapter
     private Subscription subscription; // イベント購読用
 
@@ -47,7 +42,12 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this); // ButterKnife
-        MainApplication.getAppComponent().inject(this); // Dagger
+
+        // Dagger
+        AppComponent appComponent = ((MainApplication) getApplication()).getAppComponent();
+        userEventViewController = appComponent.provideUserEventViewController();
+        todoRepository = appComponent.provideTodoRepository();
+        rxEventBus = appComponent.provideRxBus();
 
         // ToolBarの設定
         toolbar.setTitle(R.string.app_name);

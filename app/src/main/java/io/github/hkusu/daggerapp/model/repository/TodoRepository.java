@@ -3,20 +3,21 @@ package io.github.hkusu.daggerapp.model.repository;
 import java.util.List;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
-import io.github.hkusu.daggerapp.MainApplication;
-import io.github.hkusu.daggerapp.service.RxEventBus;
 import io.github.hkusu.daggerapp.model.entity.Todo;
 import io.github.hkusu.daggerapp.service.RealmService;
+import io.github.hkusu.daggerapp.service.RxEventBus;
 
+@Singleton
 public class TodoRepository {
-    @Inject
-    RealmService realmService;
-    @Inject
-    RxEventBus rxEventBus;
+    private final RealmService realmService;
+    private final RxEventBus rxEventBus;
 
-    public TodoRepository() {
-        MainApplication.getAppComponent().inject(this); // Dagger
+    @Inject
+    public TodoRepository(RealmService realmService, RxEventBus rxEventBus) {
+        this.realmService = realmService;
+        this.rxEventBus = rxEventBus;
     }
 
     public List<Todo> get() {
