@@ -19,15 +19,15 @@ import io.github.hkusu.daggerapp.model.entity.Todo;
 import io.github.hkusu.daggerapp.service.RxEventBus;
 
 public class TodoListAdapter extends ArrayAdapter<Todo> {
-    private final Context context;
     private final LayoutInflater layoutInflater;
     private final int resource; // レイアウトXMLのid
+    private static RxEventBus rxEventBus;
 
     public TodoListAdapter(Context context, int resource, List<Todo> objects) {
         super(context, resource, objects);
-        this.context = context;
         layoutInflater = LayoutInflater.from(context);
         this.resource = resource;
+        rxEventBus = ((MainApplication) context.getApplicationContext()).getAppComponent().provideRxBus();
     }
 
     @Override
@@ -39,7 +39,7 @@ public class TodoListAdapter extends ArrayAdapter<Todo> {
         }
 
         // 今回はViewHolderに状態を持つので毎回作成する
-        viewHolder = new ViewHolder(context, convertView);
+        viewHolder = new ViewHolder(convertView, rxEventBus);
         // この行のTodoデータを取得
         Todo todo = getItem(position);
         // Todoのテキストを表示
@@ -59,9 +59,9 @@ public class TodoListAdapter extends ArrayAdapter<Todo> {
         private RxEventBus rxEventBus;
         private int id; // Todoデータのid
 
-        private ViewHolder(Context context, View view) {
+        private ViewHolder(View view, RxEventBus rxEventBus) {
             ButterKnife.bind(this, view); // ButterKnife
-            rxEventBus = ((MainApplication)context.getApplicationContext()).getAppComponent().provideRxBus();
+            this.rxEventBus = rxEventBus;
         }
 
         // [削除]ボタン押下
