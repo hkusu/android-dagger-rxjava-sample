@@ -47,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
         AppComponent appComponent = ((MainApplication) getApplication()).getAppComponent();
         userEventViewController = appComponent.provideUserEventViewController();
         todoRepository = appComponent.provideTodoRepository();
-        rxEventBus = appComponent.provideRxBus();
+        rxEventBus = appComponent.provideRxEventBus();
 
         // ToolBarの設定
         toolbar.setTitle(R.string.app_name);

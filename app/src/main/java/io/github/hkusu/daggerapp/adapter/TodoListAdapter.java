@@ -27,7 +27,7 @@ public class TodoListAdapter extends ArrayAdapter<Todo> {
         super(context, resource, objects);
         layoutInflater = LayoutInflater.from(context);
         this.resource = resource;
-        rxEventBus = ((MainApplication) context.getApplicationContext()).getAppComponent().provideRxBus();
+        rxEventBus = ((MainApplication) context.getApplicationContext()).getAppComponent().provideRxEventBus();
     }
 
     @Override

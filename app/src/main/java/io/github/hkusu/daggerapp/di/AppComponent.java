@@ -12,5 +12,5 @@ import io.github.hkusu.daggerapp.viewcontroller.UserEventViewController;
 public interface AppComponent {
     UserEventViewController provideUserEventViewController();
     TodoRepository provideTodoRepository();
-    RxEventBus provideRxBus();
+    RxEventBus provideRxEventBus();
 }
