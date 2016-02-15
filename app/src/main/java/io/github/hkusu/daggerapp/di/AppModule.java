@@ -9,6 +9,7 @@ import dagger.Provides;
 import io.realm.Realm;
 import io.realm.RealmConfiguration;
 
+@Singleton
 @Module
 public class AppModule {
     private Application application;
