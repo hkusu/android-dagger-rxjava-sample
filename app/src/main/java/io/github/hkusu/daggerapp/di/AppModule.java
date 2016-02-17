@@ -12,6 +12,8 @@ import io.realm.RealmConfiguration;
 @Singleton
 @Module
 public class AppModule {
+    // コンストラクタでのインジェクトで生成方法を定義できないインスタンスはここで定義
+
     private Application application;
 
     public AppModule(Application application) {
